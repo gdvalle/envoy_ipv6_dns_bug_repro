@@ -1,0 +1,15 @@
+{
+    "request_sequence_a": [
+        "ok",
+        "ok",
+        "timeout",
+        "timeout"
+    ],
+    "request_sequence_aaaa": [
+        "NOERROR"
+    ],
+    "ipv4_answer": "172.16.238.100",
+    "ipv6_answer": "2001:db8::1",
+    "host": "0.0.0.0",
+    "port": 5553
+}

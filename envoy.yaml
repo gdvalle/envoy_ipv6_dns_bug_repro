@@ -1,0 +1,67 @@
+static_resources:
+  listeners:
+    - name: listener_0
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 8080
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                codec_type: AUTO
+                stat_prefix: ingress_http
+                route_config:
+                  virtual_hosts:
+                    - name: backend
+                      domains: ["*"]
+                      routes:
+                        - match:
+                            prefix: "/"
+                          route:
+                            cluster: httpserver
+                            timeout: 3s
+                http_filters:
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  clusters:
+    - name: httpserver
+      type: STRICT_DNS
+      lb_policy: least_request
+      dns_refresh_rate: 2s # default is 5s
+      # The workaround: disable AAAA lookups.
+      # dns_lookup_family: V4_ONLY
+      load_assignment:
+        cluster_name: httpserver
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: httpserver.home.arpa.
+                      port_value: 8080
+      typed_dns_resolver_config:
+        name: envoy.network.dns_resolver.cares
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.network.dns_resolver.cares.v3.CaresDnsResolverConfig
+          resolvers:
+          - socket_address:
+              address: 172.16.238.200
+              port_value: 5553
+          dns_resolver_options:
+            no_default_search_domain: true
+          # Speed up the failure scenario.
+          query_timeout_seconds: 1 # default is 5
+          query_tries: 2 # default is 4
+
+
+admin:
+  access_log_path: "/dev/stdout"
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9901
+
